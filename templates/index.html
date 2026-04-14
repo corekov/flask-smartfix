@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartFix — Диагностика смартфонов</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">📱</div>
+  <div>
+    <h1>SmartFix</h1>
+    <div class="subtitle">Система диагностики и ремонта смартфонов, основанная на знаниях</div>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('solver', this)">🔍 Диагностика</button>
+  <button onclick="showPage('editor', this)">📚 Редактор знаний</button>
+  <button onclick="showPage('kb', this)">🗂️ База знаний</button>
+  <div style="flex:1"></div>
+  <div class="status-bar" style="margin:auto 0;padding:6px 12px">
+    <span id="ollama-dot" class="dot offline"></span>
+    <span id="ollama-label">Ollama: проверка...</span>
+  </div>
+</nav>
+
+<main>
+
+<!-- ==================== SOLVER ==================== -->
+<section id="page-solver">
+  <div class="card">
+    <div class="card-header">🔍 Шаг 1 — Выберите диагноз</div>
+    <label>Диагноз</label>
+    <select id="sel-diagnosis" onchange="onDiagnosisChange()"></select>
+  </div>
+
+  <div id="card-chars" class="card" hidden>
+    <div class="card-header">📊 Шаг 2 — Введите значения характеристик</div>
+    <div id="char-fields" class="fields-grid"></div>
+    <button class="btn btn-primary" onclick="solve()">⚡ Определить ремонт</button>
+  </div>
+
+  <div id="result-area"></div>
+</section>
+
+<!-- ==================== EDITOR ==================== -->
+<section id="page-editor" hidden>
+
+  <!-- Детали -->
+  <div class="card">
+    <div class="card-header">🔩 Детали смартфона</div>
+    <div class="add-form">
+      <div class="add-form-title">Добавить деталь</div>
+      <div class="form-row">
+        <div class="f-grow"><label>Название</label><input type="text" id="new-part" placeholder="Название детали"></div>
+        <div><label>&nbsp;</label><button class="btn btn-success" onclick="addPart()">+ Добавить</button></div>
+      </div>
+    </div>
+    <table><thead><tr><th>Деталь</th><th>Характеристики</th><th></th></tr></thead>
+    <tbody id="parts-tbody"></tbody></table>
+  </div>
+
+  <!-- Характеристики -->
+  <div class="card">
+    <div class="card-header">📏 Характеристики</div>
+    <div class="add-form">
+      <div class="add-form-title">Добавить характеристику</div>
+      <div class="form-row">
+        <div class="f-grow"><label>Название</label><input type="text" id="nc-name" placeholder="Напряжение..."></div>
+        <div class="f-grow"><label>Ед. изм.</label><input type="text" id="nc-unit" placeholder="В, °C, %..."></div>
+        <div class="f-grow"><label>Доп. мин</label><input type="number" id="nc-min" step="any"></div>
+        <div class="f-grow"><label>Доп. макс</label><input type="number" id="nc-max" step="any"></div>
+        <div class="f-grow"><label>Норм. мин</label><input type="number" id="nc-nmin" step="any"></div>
+        <div class="f-grow"><label>Норм. макс</label><input type="number" id="nc-nmax" step="any"></div>
+        <div><label>&nbsp;</label><button class="btn btn-success" onclick="addChar()">+</button></div>
+      </div>
+    </div>
+    <table><thead><tr><th>Характеристика</th><th>Допустимые</th><th>Нормальные</th><th></th></tr></thead>
+    <tbody id="chars-tbody"></tbody></table>
+  </div>
+
+  <!-- Ремонты -->
+  <div class="card">
+    <div class="card-header">🔧 Ремонты</div>
+    <div class="add-form">
+      <div class="add-form-title">Добавить ремонт</div>
+      <div class="form-row">
+        <div class="f-grow"><label>Название ремонта</label><input type="text" id="new-repair-name" placeholder="Замена аккумулятора..."></div>
+      </div>
+      <label>Шаги (каждый с новой строки)</label>
+      <textarea id="new-repair-steps" rows="4" placeholder="Выключить смартфон&#10;Разобрать корпус&#10;..."></textarea>
+      <button class="btn btn-success" onclick="addRepair()">+ Добавить ремонт</button>
+    </div>
+    <table><thead><tr><th>Ремонт</th><th>Первые шаги</th><th></th></tr></thead>
+    <tbody id="repairs-tbody"></tbody></table>
+  </div>
+
+  <!-- Диагнозы -->
+  <div class="card">
+    <div class="card-header">🏥 Диагнозы</div>
+    <div class="add-form">
+      <div class="add-form-title">Добавить диагноз</div>
+      <div class="form-row">
+        <div class="f-grow"><label>Название</label><input type="text" id="new-diag-name" placeholder="Перегрев..."></div>
+        <div class="f-grow">
+          <label>Ремонт</label>
+          <select id="new-diag-repair">
+            <option value="">-- Выберите ремонт --</option>
+          </select>
+        </div>
+        <div><label>&nbsp;</label><button class="btn btn-success" onclick="addDiag()">+</button></div>
+      </div>
+    </div>
+    <table><thead><tr><th>Диагноз</th><th>Хар-ки</th><th>Ремонт</th><th></th></tr></thead>
+    <tbody id="diag-tbody"></tbody></table>
+  </div>
+</section>
+
+<!-- ==================== KB ==================== -->
+<section id="page-kb" hidden>
+  <div class="card">
+    <div class="card-header">🔩 Детали → Характеристики</div>
+    <table><thead><tr><th>Деталь</th><th>Характеристики</th></tr></thead>
+    <tbody id="kb-parts-tbody"></tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-header">🏥 Диагнозы → Диапазоны значений</div>
+    <table><thead><tr><th>Диагноз</th><th>Характеристика</th><th>Диапазон</th><th>Ед.</th></tr></thead>
+    <tbody id="kb-diag-tbody"></tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-header">🔧 Диагнозы → Ремонты → Действия</div>
+    <table><thead><tr><th>Диагноз</th><th>Ремонт</th><th>Действия</th></tr></thead>
+    <tbody id="kb-repairs-tbody"></tbody></table>
+  </div>
+</section>
+
+</main>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
