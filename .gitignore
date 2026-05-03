@@ -3,3 +3,4 @@ smartfix.db
 __pycache__
 encoder.joblib
 model.joblib
+kb_hash.joblib

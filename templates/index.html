@@ -5,263 +5,373 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SmartFix — Диагностика смартфонов</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<div class="app-shell">
-  <!-- Topbar -->
-  <header class="topbar">
-    <div class="topbar-logo">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      SmartFix
+
+<!-- ── HEADER ── -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <svg class="brand-logo" viewBox="0 0 36 36" fill="none" aria-label="SmartFix">
+        <rect x="8" y="2" width="20" height="32" rx="4" stroke="currentColor" stroke-width="2.2"/>
+        <rect x="13" y="6" width="10" height="6" rx="1.5" fill="currentColor" opacity=".25"/>
+        <path d="M14 18l3 3 5-5" stroke="var(--color-primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="18" cy="30" r="1.5" fill="currentColor" opacity=".4"/>
+      </svg>
+      <span class="brand-name">SmartFix</span>
     </div>
-    <nav class="topbar-nav">
-      <button class="nav-btn active" onclick="showPage('diag')">Диагностика</button>
-      <button class="nav-btn" onclick="showPage('kb')">База знаний</button>
+    <nav class="main-nav">
+      <button class="nav-btn active" data-tab="diagnose">🔍 Диагностика</button>
+      <button class="nav-btn" data-tab="editor">🗂 Редактор БЗ</button>
     </nav>
-    <div class="topbar-right">
-      <span class="status-badge"><span class="dot" id="ollama-dot"></span><span id="ollama-label">Ollama</span></span>
-      <span class="status-badge"><span class="dot" id="ml-dot"></span><span id="ml-label">ML</span></span>
-      <button class="theme-toggle" data-theme-toggle aria-label="Тема">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <div class="header-actions">
+      <div class="ollama-status" id="ollamaStatus">
+        <span class="status-dot"></span><span class="status-label">Ollama</span>
+      </div>
+      <button class="icon-btn" data-theme-toggle aria-label="Сменить тему">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <!-- Страница диагностики -->
-  <main class="main-content visible" id="page-diag">
-    <div class="diag-layout">
-      <!-- Форма ввода -->
-      <div class="card">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Характеристики устройства
-        </div>
-        <div class="char-grid" id="char-inputs">
-          <!-- рендерится через JS -->
-        </div>
-        <div style="margin-top:1.25rem;display:flex;gap:.5rem;flex-wrap:wrap">
-          <button class="btn btn-primary" id="btn-diagnose" onclick="runDiagnosis()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Диагностировать
-          </button>
-          <button class="btn btn-secondary btn-sm" onclick="resetForm()">Сбросить</button>
+<!-- ════════════════════════════════════════
+     TAB: ДИАГНОСТИКА
+════════════════════════════════════════ -->
+<main class="app-main" id="tabDiagnose">
+
+  <div class="page-layout">
+
+    <!-- Левая колонка: ввод характеристик -->
+    <section class="panel input-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Параметры устройства</h2>
+        <button class="btn btn-ghost btn-sm" id="clearInputsBtn">Очистить</button>
+      </div>
+      <div class="chars-form" id="charsForm">
+        <!-- Заполняется через JS -->
+        <div class="loading-skeleton">
+          <div class="skeleton skeleton-text" style="width:60%"></div>
+          <div class="skeleton skeleton-text"></div>
+          <div class="skeleton skeleton-text" style="width:80%"></div>
         </div>
       </div>
-
-      <!-- Результаты -->
-      <div class="card">
-        <div class="card-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Результат диагностики
-        </div>
-        <div id="diag-result">
-          <div class="empty-state">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <h3>Введите параметры</h3>
-            <p>Заполните хотя бы одно поле и нажмите «Диагностировать»</p>
-          </div>
-        </div>
-
-        <!-- Ollama проверка (скрыта до результата) -->
-        <div id="ollama-section" style="display:none;margin-top:1.5rem;border-top:1px solid var(--color-divider);padding-top:1.5rem">
-          <div class="card-title" style="margin-bottom:.75rem">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
-            Проверка ИИ (Ollama)
-          </div>
-          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem">
-            <select class="form-select" id="ollama-model" style="flex:1;min-width:140px"></select>
-            <button class="btn btn-secondary btn-sm" id="btn-ollama" onclick="runOllama()">Запустить проверку</button>
-          </div>
-          <div id="ollama-output"></div>
-        </div>
+      <div class="panel-footer">
+        <button class="btn btn-primary btn-full" id="runDiagnoseBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5,3 19,12 5,21"/></svg>
+          Запустить диагностику
+        </button>
       </div>
+    </section>
+
+    <!-- Правая колонка: результаты -->
+    <section class="panel results-panel">
+
+      <!-- Пустое состояние -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        </div>
+        <p class="empty-title">Введите параметры устройства</p>
+        <p class="empty-sub">Система автоматически определит неисправность и предложит ремонт</p>
+      </div>
+
+      <!-- Результаты диагностики -->
+      <div class="diag-results hidden" id="diagResults">
+
+        <!-- Метод -->
+        <div class="method-badge-row" id="methodRow"></div>
+
+        <!-- Финальный диагноз -->
+        <div class="result-block final-block">
+          <div class="result-block-header">
+            <span class="block-label">Финальный диагноз</span>
+            <span class="diag-method-tag" id="methodTag"></span>
+          </div>
+          <div class="final-diagnosis" id="finalDiagnosis">—</div>
+        </div>
+
+        <!-- Кандидаты экспертной системы -->
+        <div class="result-block" id="expertBlock">
+          <div class="result-block-header">
+            <span class="block-label">Экспертная система</span>
+            <span class="candidates-count" id="expertCount"></span>
+          </div>
+          <div class="candidates-list" id="expertCandidates"></div>
+        </div>
+
+        <!-- ML-ранжирование -->
+        <div class="result-block" id="mlBlock">
+          <div class="result-block-header">
+            <span class="block-label">ML-модель (дерево решений)</span>
+          </div>
+          <div class="ml-list" id="mlRanking"></div>
+        </div>
+
+        <!-- Ремонт -->
+        <div class="result-block repair-block hidden" id="repairBlock">
+          <div class="result-block-header">
+            <span class="block-label">Алгоритм ремонта</span>
+          </div>
+          <div id="repairContent"></div>
+        </div>
+
+        <!-- Ollama проверка -->
+        <div class="result-block ollama-block hidden" id="ollamaBlock">
+          <div class="result-block-header">
+            <span class="block-label">Проверка ИИ (Ollama)</span>
+            <div class="ollama-controls">
+              <select class="select-sm" id="ollamaModelSelect">
+                <option value="">Выбрать модель...</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" id="runOllamaBtn" disabled>Запустить</button>
+            </div>
+          </div>
+          <div class="ollama-output" id="ollamaOutput">
+            <div class="ollama-placeholder">Выберите модель и нажмите «Запустить»</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ════════════════════════════════════════
+     TAB: РЕДАКТОР БЗ
+════════════════════════════════════════ -->
+<div class="app-main hidden" id="tabEditor">
+  <div class="editor-layout">
+
+    <!-- Боковая панель редактора -->
+    <aside class="editor-sidebar">
+      <div class="editor-nav">
+        <button class="editor-nav-btn active" data-etab="parts">Детали</button>
+        <button class="editor-nav-btn" data-etab="diagnoses">Диагнозы</button>
+        <button class="editor-nav-btn" data-etab="repairs">Ремонты</button>
+      </div>
+      <div class="editor-actions">
+        <button class="btn btn-outline btn-sm btn-full" id="validateKbBtn">
+          ✅ Проверить БЗ
+        </button>
+        <button class="btn btn-primary btn-sm btn-full" id="trainModelBtn">
+          🔄 Обучить модель
+        </button>
+      </div>
+      <div class="model-status-card" id="modelStatusCard">
+        <span class="model-status-label">ML-модель:</span>
+        <span class="model-status-val" id="modelStatusVal">—</span>
+      </div>
+    </aside>
+
+    <!-- Область редактирования -->
+    <div class="editor-content">
+
+      <!-- ── Детали ── -->
+      <div class="etab active" id="etabParts">
+        <div class="etab-header">
+          <h3>Детали смартфона</h3>
+          <button class="btn btn-primary btn-sm" id="addPartBtn">+ Деталь</button>
+        </div>
+        <div id="partsList" class="items-grid"></div>
+      </div>
+
+      <!-- ── Диагнозы ── -->
+      <div class="etab hidden" id="etabDiagnoses">
+        <div class="etab-header">
+          <h3>Диагнозы</h3>
+          <button class="btn btn-primary btn-sm" id="addDiagBtn">+ Диагноз</button>
+        </div>
+        <div id="diagListEditor" class="items-grid"></div>
+      </div>
+
+      <!-- ── Ремонты ── -->
+      <div class="etab hidden" id="etabRepairs">
+        <div class="etab-header">
+          <h3>Ремонты</h3>
+          <button class="btn btn-primary btn-sm" id="addRepairBtn">+ Ремонт</button>
+        </div>
+        <div id="repairsList" class="items-list"></div>
+      </div>
+
     </div>
-  </main>
-
-  <!-- Страница базы знаний -->
-  <main class="main-content" id="page-kb">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem">
-      <h2 style="font-size:1.25rem;font-weight:700">Редактор базы знаний</h2>
-      <div style="display:flex;gap:.5rem">
-        <button class="btn btn-secondary btn-sm" onclick="validateKB()">Проверить целостность</button>
-        <button class="btn btn-primary btn-sm" id="btn-train" onclick="trainModel()">Переобучить ML-модель</button>
-      </div>
-    </div>
-
-    <div class="kb-layout">
-      <nav class="kb-nav">
-        <button class="kb-nav-btn active" onclick="showKBSection('parts')">Детали</button>
-        <button class="kb-nav-btn" onclick="showKBSection('chars')">Характеристики</button>
-        <button class="kb-nav-btn" onclick="showKBSection('repairs')">Ремонты</button>
-        <button class="kb-nav-btn" onclick="showKBSection('diagnoses')">Диагнозы</button>
-      </nav>
-
-      <div>
-        <!-- Детали -->
-        <section class="kb-section visible" id="kb-parts">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <h3 style="font-weight:600">Детали смартфона</h3>
-            <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-part')">+ Добавить деталь</button>
-          </div>
-          <div class="kb-list" id="parts-list"></div>
-        </section>
-
-        <!-- Характеристики (только просмотр) -->
-        <section class="kb-section" id="kb-chars">
-          <div style="margin-bottom:1rem"><h3 style="font-weight:600">Характеристики (из БЗ)</h3></div>
-          <div class="kb-list" id="chars-list"></div>
-        </section>
-
-        <!-- Ремонты -->
-        <section class="kb-section" id="kb-repairs">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <h3 style="font-weight:600">Ремонты и шаги</h3>
-            <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-repair')">+ Добавить ремонт</button>
-          </div>
-          <div class="kb-list" id="repairs-list"></div>
-        </section>
-
-        <!-- Диагнозы -->
-        <section class="kb-section" id="kb-diagnoses">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <h3 style="font-weight:600">Диагнозы и правила</h3>
-            <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-diag')">+ Добавить диагноз</button>
-          </div>
-          <div class="kb-list" id="diagnoses-list"></div>
-        </section>
-      </div>
-    </div>
-  </main>
+  </div>
 </div>
 
-<!-- Toast -->
-<div class="toast-container" id="toasts"></div>
+<!-- ════════════════════════════════════════
+     МОДАЛЬНЫЕ ОКНА
+════════════════════════════════════════ -->
 
-<!-- Modals -->
-<div class="modal-overlay" id="modal-add-part">
+<!-- Добавить деталь -->
+<div class="modal-overlay hidden" id="modalAddPart">
   <div class="modal">
-    <div class="modal-title">Новая деталь</div>
-    <div class="form-group">
-      <label class="form-label">Название</label>
-      <input class="form-input" id="input-part-name" placeholder="Например: Оперативная память">
+    <div class="modal-header"><h4>Новая деталь</h4><button class="modal-close" data-close="modalAddPart">✕</button></div>
+    <div class="modal-body">
+      <label class="field-label">Название детали</label>
+      <input class="field-input" id="newPartName" placeholder="Например: Динамик">
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-part')">Отмена</button>
-      <button class="btn btn-primary" onclick="addPart()">Добавить</button>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modalAddPart">Отмена</button>
+      <button class="btn btn-primary" id="savePartBtn">Сохранить</button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-add-repair">
+<!-- Добавить характеристику к детали -->
+<div class="modal-overlay hidden" id="modalAddChar">
   <div class="modal">
-    <div class="modal-title">Новый ремонт</div>
-    <div class="form-group">
-      <label class="form-label">Название ремонта</label>
-      <input class="form-input" id="input-repair-name" placeholder="Например: Замена модема">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-repair')">Отмена</button>
-      <button class="btn btn-primary" onclick="addRepair()">Добавить</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-add-diag">
-  <div class="modal">
-    <div class="modal-title">Новый диагноз</div>
-    <div class="form-group">
-      <label class="form-label">Название</label>
-      <input class="form-input" id="input-diag-name" placeholder="Например: Неисправна оперативная память">
-    </div>
-    <div class="form-group" style="margin-top:.75rem">
-      <label class="form-label">Ремонт</label>
-      <select class="form-select" id="input-diag-repair"></select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-diag')">Отмена</button>
-      <button class="btn btn-primary" onclick="addDiagnosis()">Добавить</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: добавить характеристику к диагнозу -->
-<div class="modal-overlay" id="modal-add-diag-char">
-  <div class="modal" style="max-width:540px">
-    <div class="modal-title">Добавить характеристику к диагнозу</div>
-    <input type="hidden" id="cur-diag-id">
-    <div class="form-group">
-      <label class="form-label">Характеристика</label>
-      <select class="form-select" id="input-dc-char" onchange="onDCCharChange()"></select>
-    </div>
-    <div id="dc-range-fields">
-      <div class="form-grid" style="margin-top:.75rem">
-        <div class="form-group">
-          <label class="form-label">Мин. значение</label>
-          <input class="form-input" id="input-dc-min" type="number" step="any">
+    <div class="modal-header"><h4>Новая характеристика</h4><button class="modal-close" data-close="modalAddChar">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="newCharPartId">
+      <div class="form-row">
+        <div class="form-col">
+          <label class="field-label">Название</label>
+          <input class="field-input" id="newCharName" placeholder="Напряжение...">
         </div>
-        <div class="form-group">
-          <label class="form-label">Макс. значение</label>
-          <input class="form-input" id="input-dc-max" type="number" step="any">
+        <div class="form-col">
+          <label class="field-label">Единица</label>
+          <input class="field-input" id="newCharUnit" placeholder="В, %, °C...">
         </div>
       </div>
-      <div class="form-grid" style="margin-top:.5rem">
-        <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem">
-          <input type="checkbox" id="input-dc-imin" checked> Включить мин.
-        </label>
-        <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem">
-          <input type="checkbox" id="input-dc-imax" checked> Включить макс.
-        </label>
-      </div>
+      <label class="field-label">Тип значения</label>
+      <select class="field-input" id="newCharType">
+        <option value="real">Вещественный (R)</option>
+        <option value="int">Целочисленный (I)</option>
+        <option value="binary">Бинарный {0, 1}</option>
+      </select>
     </div>
-    <div id="dc-exact-field" style="display:none;margin-top:.75rem">
-      <div class="form-group">
-        <label class="form-label">Точное значение (0 или 1)</label>
-        <select class="form-select" id="input-dc-exact">
-          <option value="0">0 — Нет</option>
-          <option value="1">1 — Да</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-actions" style="margin-top:1rem">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-diag-char')">Отмена</button>
-      <button class="btn btn-primary" onclick="addDiagChar()">Добавить правило</button>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modalAddChar">Отмена</button>
+      <button class="btn btn-primary" id="saveCharBtn">Добавить</button>
     </div>
   </div>
 </div>
 
-<!-- Modal: добавить характеристику к детали -->
-<div class="modal-overlay" id="modal-add-part-char">
+<!-- Добавить диагноз -->
+<div class="modal-overlay hidden" id="modalAddDiag">
   <div class="modal">
-    <div class="modal-title">Привязать характеристику к детали</div>
-    <input type="hidden" id="cur-part-id">
-    <div class="form-group">
-      <label class="form-label">Характеристика</label>
-      <select class="form-select" id="input-pc-char"></select>
+    <div class="modal-header"><h4>Новый диагноз</h4><button class="modal-close" data-close="modalAddDiag">✕</button></div>
+    <div class="modal-body">
+      <label class="field-label">Название диагноза</label>
+      <input class="field-input" id="newDiagName" placeholder="Например: Неисправен разъём зарядки">
     </div>
-    <div class="modal-actions" style="margin-top:1rem">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-part-char')">Отмена</button>
-      <button class="btn btn-primary" onclick="addPartChar()">Привязать</button>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modalAddDiag">Отмена</button>
+      <button class="btn btn-primary" id="saveDiagBtn">Сохранить</button>
     </div>
   </div>
 </div>
 
-<!-- Modal: добавить шаг ремонта -->
-<div class="modal-overlay" id="modal-add-step">
-  <div class="modal">
-    <div class="modal-title">Добавить шаг ремонта</div>
-    <input type="hidden" id="cur-repair-id">
-    <div class="form-group">
-      <label class="form-label">Описание шага</label>
-      <textarea class="form-input" id="input-step-desc" rows="3" placeholder="Опишите действие..."></textarea>
+<!-- Редактировать диагноз (характеристики + ремонты) -->
+<div class="modal-overlay hidden" id="modalEditDiag">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h4 id="editDiagTitle">Диагноз</h4>
+      <button class="modal-close" data-close="modalEditDiag">✕</button>
     </div>
-    <div class="modal-actions" style="margin-top:.75rem">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-step')">Отмена</button>
-      <button class="btn btn-primary" onclick="addRepairStep()">Добавить</button>
+    <div class="modal-body modal-two-col">
+      <!-- Характеристики -->
+      <div class="modal-col">
+        <div class="modal-col-header">
+          <span class="modal-col-title">Характеристики</span>
+          <button class="btn btn-ghost btn-sm" id="addDiagCharBtn">+ Добавить</button>
+        </div>
+        <div id="diagCharList" class="modal-items-list"></div>
+      </div>
+      <!-- Ремонты -->
+      <div class="modal-col">
+        <div class="modal-col-header">
+          <span class="modal-col-title">Связанные ремонты</span>
+          <button class="btn btn-ghost btn-sm" id="addDiagRepairBtn">+ Добавить</button>
+        </div>
+        <div id="diagRepairList" class="modal-items-list"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modalEditDiag">Закрыть</button>
     </div>
   </div>
 </div>
+
+<!-- Добавить характеристику к диагнозу -->
+<div class="modal-overlay hidden" id="modalAddDiagChar">
+  <div class="modal">
+    <div class="modal-header"><h4>Добавить характеристику</h4><button class="modal-close" data-close="modalAddDiagChar">✕</button></div>
+    <div class="modal-body">
+      <label class="field-label">Характеристика</label>
+      <select class="field-input" id="diagCharSelect"></select>
+      <div id="diagCharRangeFields" class="range-fields">
+        <div class="form-row">
+          <div class="form-col">
+            <label class="field-label">Минимум</label>
+            <input class="field-input" id="diagCharMin" type="number" step="any" placeholder="0">
+          </div>
+          <div class="form-col">
+            <label class="field-label">Максимум</label>
+            <input class="field-input" id="diagCharMax" type="number" step="any" placeholder="100">
+          </div>
+        </div>
+        <div id="fixedValRow" class="hidden">
+          <label class="field-label">Фиксированное значение (0 или 1)</label>
+          <select class="field-input" id="diagCharFixed">
+            <option value="0">0 (нет)</option>
+            <option value="1">1 (есть)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modalAddDiagChar">Отмена</button>
+      <button class="btn btn-primary" id="saveDiagCharBtn">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Добавить ремонт -->
+<div class="modal-overlay hidden" id="modalAddRepair">
+  <div class="modal modal-lg">
+    <div class="modal-header"><h4>Новый ремонт</h4><button class="modal-close" data-close="modalAddRepair">✕</button></div>
+    <div class="modal-body">
+      <label class="field-label">Название ремонта</label>
+      <input class="field-input" id="newRepairName" placeholder="Замена аккумулятора...">
+      <label class="field-label" style="margin-top:var(--space-4)">Шаги ремонта</label>
+      <div id="repairStepsList" class="steps-editor"></div>
+      <button class="btn btn-ghost btn-sm" id="addStepBtn" style="margin-top:var(--space-2)">+ Добавить шаг</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modalAddRepair">Отмена</button>
+      <button class="btn btn-primary" id="saveRepairBtn">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Редактировать ремонт -->
+<div class="modal-overlay hidden" id="modalEditRepair">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h4>Редактировать ремонт</h4>
+      <button class="modal-close" data-close="modalEditRepair">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label">Название ремонта</label>
+      <input class="field-input" id="editRepairName" placeholder="Название...">
+      <label class="field-label" style="margin-top:var(--space-4)">Шаги ремонта</label>
+      <div id="editRepairStepsList" class="steps-editor"></div>
+      <button class="btn btn-ghost btn-sm" id="addEditStepBtn" style="margin-top:var(--space-2)">+ Добавить шаг</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-close="modalEditRepair">Отмена</button>
+      <button class="btn btn-primary" id="saveEditRepairBtn">Сохранить изменения</button>
+    </div>
+  </div>
+</div>
+
+<!-- Тост-уведомления -->
+<div class="toast-container" id="toastContainer"></div>
 
 <script src="/static/js/app.js"></script>
 </body>
