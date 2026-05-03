@@ -509,7 +509,7 @@ function renderDiagnoses(diagnoses) {
       <div class="diag-card-header">
         <span class="diag-card-name">${d.name}</span>
         <div class="card-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openEditDiag(${d.id}, '${d.name.replace(/'/g, "\\'")}')">✏️ Редактировать</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEditDiag(${d.id}, '${d.name.replace(/'/g, "\\'")}')">Редактировать</button>
           <button class="btn btn-danger btn-sm" onclick="deleteDiag(${d.id})">Удалить</button>
         </div>
       </div>`;
@@ -792,7 +792,7 @@ $("validateKbBtn").addEventListener("click", async () => {
 
 async function updateModelStatus() {
   const r = await api("/api/model/status");
-  $("modelStatusVal").textContent = r.trained ? "Готова ✓" : "Не обучена";
+  $("modelStatusVal").textContent = r.trained ? "Готова" : "Не обучена";
   $("modelStatusVal").style.color = r.trained ? "var(--color-success)" : "var(--color-warning)";
 }
 
