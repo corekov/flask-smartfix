@@ -893,7 +893,7 @@ def ollama_verify():
             data=payload,
             headers={"Content-Type": "application/json"}
         )
-        resp   = urllib.request.urlopen(req, timeout=60)
+        resp   = urllib.request.urlopen(req, timeout=120)
         result = json.loads(resp.read())
         return jsonify({"response": result.get("response", "")})
     except Exception as e:

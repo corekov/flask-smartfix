@@ -714,7 +714,7 @@ function renderRepairs(repairs) {
       <div class="repair-card-header">
         <span class="repair-card-name">${rep.name}</span>
         <div class="card-actions">
-          <button class="btn btn-ghost btn-sm" onclick="openEditRepair(${rep.id})">✏️ Редактировать</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEditRepair(${rep.id})">Редактировать</button>
           <button class="btn btn-danger btn-sm" onclick="deleteRepair(${rep.id})">Удалить</button>
         </div>
       </div>
