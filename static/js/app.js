@@ -424,7 +424,7 @@ function renderParts(parts, chars) {
           : partChars.map(c => `
             <div class="char-tag">
               <span class="char-tag-name">${c.name}</span>
-              <span class="char-tag-meta">${typeLabel(c.value_type)}${c.unit ? " · " + c.unit : ""}</span>
+              <span class="char-tag-meta">${typeLabel(c.value_type)}${c.unit ? "," + c.unit : ""}</span>
               <button class="char-tag-del" onclick="deleteChar(${c.id})" title="Удалить характеристику">✕</button>
             </div>`).join("")}
       </div>`;
@@ -804,7 +804,7 @@ $("trainModelBtn").addEventListener("click", async () => {
     <div class="train-card">
       <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
       <div class="train-title">Обучение ML-модели...</div>
-      <div class="train-sub">DecisionTreeClassifier + GridSearchCV (5-fold)<br>Генерация датасета из базы знаний</div>
+      <div class="train-sub">Генерация датасета из базы знаний</div>
     </div>`;
   document.body.appendChild(overlay);
 
