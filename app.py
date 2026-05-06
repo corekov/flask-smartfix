@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-SmartFix — система диагностики и ремонта смартфонов
-Глава 4: реализация на Python 3.10 + Flask + SQLite + scikit-learn
-"""
-
 import os, json, random, joblib, numpy as np
 from flask import Flask, render_template, request, jsonify
 import sqlite3
@@ -477,23 +471,18 @@ def ml_predict(values_dict):
 # ───────────────────── Экспертная система ─────────────────────
 
 def expert_diagnose(values_dict):
-    """
-    Прямое сопоставление с правилами БД.
-    - Учитываются только введённые пользователем характеристики.
-    - Нарушение фиксированного правила (fixed_val) → диагноз исключается.
-    - match_pct = доля введённых характеристик, удовлетворяющих правилам.
-    - Порог включения: match_pct >= 0.5
-    """
-    rules   = load_diagnosis_rules()
-    results = []
+    rules      = load_diagnosis_rules()
+    candidates = []
+    rejected   = []
 
     for diag_name, char_rules in rules.items():
         if not char_rules:
             continue
 
-        matched    = 0
-        total      = 0
-        hard_fail  = False
+        matched     = 0
+        total       = 0
+        hard_fail   = False
+        fail_reason = None
 
         for r in char_rules:
             feat = r["name"]
@@ -507,35 +496,48 @@ def expert_diagnose(values_dict):
                 if abs(val - r["fixed_val"]) < 1e-9:
                     matched += 1
                 else:
-                    hard_fail = True
+                    hard_fail   = True
+                    fail_reason = (
+                        f"«{feat}» = {val:.0f}, "
+                        f"ожидалось {int(r['fixed_val'])} (фиксированное правило)"
+                    )
                     break
             else:
                 lo = r["min_val"] if r["min_val"] is not None else -1e18
                 hi = r["max_val"] if r["max_val"] is not None else  1e18
                 if lo <= val <= hi:
                     matched += 1
+                else:
+                    if fail_reason is None:
+                        lo_str = str(r["min_val"]) if r["min_val"] is not None else "−∞"
+                        hi_str = str(r["max_val"]) if r["max_val"] is not None else "+∞"
+                        fail_reason = f"«{feat}» = {val} ∉ [{lo_str}; {hi_str}]"
 
         if hard_fail:
+            rejected.append({"name": diag_name, "reason": fail_reason})
             continue
 
-        if total > 0 and matched / total >= 0.5:
-            results.append((diag_name, round(matched / total, 4), matched, total))
+        if total == 0:
+            rejected.append({"name": diag_name, "reason": "нет введённых характеристик для проверки"})
+            continue
 
-    results.sort(key=lambda x: -x[1])
-    return results
+        pct = matched / total
+        if pct >= 0.5:
+            candidates.append((diag_name, round(pct, 4), matched, total))
+        else:
+            reason = fail_reason or f"совпало {matched} из {total} характеристик ({round(pct*100)}%)"
+            rejected.append({"name": diag_name, "reason": reason})
+
+    candidates.sort(key=lambda x: -x[1])
+    return {"candidates": candidates, "rejected": rejected}
 
 
 # ─────────────────────── Гибридная диагностика ────────────────────────
 
 def hybrid_diagnose(values_dict):
-    """
-    Вариант 2: гибридный приоритетный механизм (Глава 4).
-    1. ЭС → список кандидатов
-    2. Один кандидат → используется напрямую (метод: expert)
-    3. Несколько → ML выбирает наиболее вероятный (метод: hybrid)
-    4. Ни одного → только ML (метод: ml_only)
-    """
-    expert_candidates = expert_diagnose(values_dict)
+    expert_result     = expert_diagnose(values_dict)
+    expert_candidates = expert_result["candidates"]
+    rejected          = expert_result["rejected"]
     ml_results        = ml_predict(values_dict)
 
     if len(expert_candidates) == 1:
@@ -557,6 +559,7 @@ def hybrid_diagnose(values_dict):
             {"name": n, "match_pct": p, "matched": m, "total": t}
             for n, p, m, t in expert_candidates
         ],
+        "expert_rejected": rejected,
         "ml_ranking": [{"name": n, "probability": p} for n, p in ml_results[:5]],
     }
 

@@ -271,6 +271,24 @@ function renderDiagResults(result) {
           <span class="candidate-pct">${c.matched}/${c.total} = ${pct}%</span>
         </div>`;
     });
+    const rejected = result.expert_rejected || [];
+    const rejBlock = $('expertRejected');
+    const rejList  = $('expertRejectedList');
+    if (rejBlock && rejList) {
+      rejList.innerHTML = '';
+      if (rejected.length > 0) {
+        show(rejBlock);
+        rejected.forEach(r => {
+          rejList.innerHTML += `
+            <div class="rejected-item">
+              <span class="rejected-name">«${r.name}»</span>
+              <span class="rejected-reason"> не подходит, так как ${r.reason}</span>
+            </div>`;
+        });
+      } else {
+        hide(rejBlock);
+      }
+    }
   }
 
   // ML-ранжирование
